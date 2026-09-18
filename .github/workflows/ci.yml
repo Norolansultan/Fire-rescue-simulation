@@ -9,21 +9,23 @@ name: CI
 # failure blocks merge."
 #
 # Steps wired so far, through M1 (engine and determinism), M2 (scenario
-# contract and validator) and the logic-layer portion of M3 (render
-# boundary and render tree): type check, the determinism lint (covering
-# app/ and tools/), and the unit test suite (vitest runs everything under
-# test/, which includes the golden-run determinism test, the render- and
-# scenario-boundary truth-leak tests including test/boundary/no-truth.spec,
-# the scenario contract/validator tests, and the envelope-single /
-# no-recommendation measure guards from SPEC/12 §11).
+# contract and validator), the logic-layer portion of M3 (render boundary
+# and render tree), and M4 (telemetry): type check, the determinism lint
+# (covering app/ and tools/), and the unit test suite (vitest runs
+# everything under test/, which includes the golden-run determinism test,
+# the render- and scenario-boundary truth-leak tests including
+# test/boundary/no-truth.spec, the scenario contract/validator tests, the
+# envelope-single / no-recommendation measure guards from SPEC/12 §11,
+# the telemetry record-kind coverage test, the derived-measures tests,
+# the IndexedDB-sink and resume tests, and the upload-queue test).
 #
 # M3's remaining pieces — an actual MapLibre/PMTiles map and the
 # CVD-simulation / pixel-accuracy tests — need real geographic tile data
 # through tools/bundle/ (not built) and a browser/WebGL test harness not
 # set up here; see the scope note in test/boundary/no-truth.spec.ts.
-# Licence scan, module-boundary lint, and the telemetry coverage /
-# derived-measure tests are added as the milestones that produce them
-# (M4+) land — see SPEC/10 §3 for the dependency order.
+# Licence scan and module-boundary lint are added when a milestone
+# actually needs multiple licensed dependencies or cross-module import
+# rules to enforce — see SPEC/10 §3 for the dependency order.
 
 on:
   push:
