@@ -1,0 +1,45 @@
+name: CI
+
+# Mirrors SPEC/10_Build_Plan_and_Acceptance.md §4: "Every push runs, in
+# order: type check with strict settings; lint including the determinism
+# bans and the module boundary rules; licence scan against the allowlist,
+# transitively; unit tests; the golden-run determinism test; the
+# truth-boundary integration test; the scenario validator against all
+# fixture scenarios; the telemetry coverage and derived-measure tests. Any
+# failure blocks merge."
+#
+# Only the steps that exist as of M1 (engine and determinism) are wired
+# here: type check, the determinism lint, and the unit/golden-run test
+# suite (vitest runs everything under test/, which includes the golden
+# run). Licence scan, module-boundary lint, the truth-boundary test, the
+# scenario validator and the telemetry coverage tests are added as the
+# milestones that produce them (M2-M4) land — see SPEC/10 §3 for the
+# dependency order.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check (strict)
+        run: npm run typecheck
+
+      - name: Determinism lint (invariant I1, SPEC/05 §3)
+        run: npm run lint:determinism
+
+      - name: Unit tests, including the golden-run determinism test (SPEC/10 M1)
+        run: npm test

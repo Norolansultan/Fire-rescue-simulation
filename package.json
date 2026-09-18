@@ -1,0 +1,22 @@
+{
+  "name": "fire-rescue-simulation",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Verification of machine-generated projections in wildfire incident command — research instrument (see SPEC/00_README.md).",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit false --outDir dist",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint:determinism": "tsx tools/validate/determinism-lint.ts app",
+    "ci": "npm run typecheck && npm run lint:determinism && npm test"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.2",
+    "tsx": "^4.19.2",
+    "vitest": "^5.0.1"
+  }
+}
