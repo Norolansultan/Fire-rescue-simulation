@@ -22,6 +22,16 @@ name: CI
 # capability-matrix and route-reachability tests, and the retrieval
 # closure test).
 #
+# A visual preview UI now exists under app/render/ui/ (Vite + Preact +
+# MapLibre), driven by app/session/orchestrator.ts and synthetic demo
+# content under content/demo/ + app/scenario/demo-scenario.ts (see both
+# READMEs for what this is and is not). It is covered here by the same
+# type check and determinism lint as the rest of app/ — it has no
+# dedicated tests of its own (no browser/WebGL harness is set up; see the
+# M3 scope note above), and is explicitly a preview, not the compliant
+# instrument (network-dependent tiles, no offline bundle — I3 does not
+# hold for this build).
+#
 # M3's remaining pieces — an actual MapLibre/PMTiles map and the
 # CVD-simulation / pixel-accuracy tests — need real geographic tile data
 # through tools/bundle/ (not built) and a browser/WebGL test harness not
