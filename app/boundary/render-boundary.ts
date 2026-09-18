@@ -21,7 +21,20 @@
  */
 
 import { sortedKeys } from "../engine/deterministic-object.js";
-import type { Degradation, InfoAtom, Provenance, RecordPayload } from "../scenario/types.js";
+import type { CycleIndex, LatLon, Polygon, VirtualTime, WarmupIndex } from "../engine/primitives.js";
+import type {
+  BranchStatement,
+  Certainty,
+  CycleSpec,
+  Degradation,
+  Envelope,
+  InfoAtom,
+  Phase,
+  Provenance,
+  RateMark,
+  RecordPayload,
+  SensorFootprint,
+} from "../scenario/types.js";
 
 /** Everything the render layer may ever see. Deliberately a narrow allowlist, not "InfoAtom minus truth" — fields not named here (tier, origin, cycle, loadBearing, routes, retrievalKeys, consequence, truth) never cross either. */
 export interface RenderableAtom {
@@ -29,6 +42,58 @@ export interface RenderableAtom {
   readonly record: RecordPayload;
   readonly provenance: Provenance;
   readonly degradationVisible: readonly Degradation["form"][]; // only what is inferable — the form tag, never the reviewer-only `note`
+}
+
+/** Envelope minus its two explicitly-TRUTH fields (`flag`, `breachGeometry`, SPEC/04 §6) — AND minus `isOmissionCycle`. That field carries no `// TRUTH` comment in SPEC/04, but rendering it (or anything derived from it) would announce "this is the cycle where the hidden thing happens", defeating the omission's entire purpose (SPEC/03 §5). I4's stated purpose — "the bug class that would silently invalidate the study" — covers this even though the literal tag doesn't; excluded here rather than waiting for the spec to catch up. */
+export interface RenderableEnvelope {
+  readonly cycle: CycleIndex;
+  readonly polygon: Polygon;
+  readonly certainty: Certainty;
+  readonly attribution: string;
+  readonly horizonVirtual: VirtualTime;
+  readonly horizonLabel: string;
+  readonly containmentToleranceMetres: number;
+}
+
+/** RateMark minus `consistentWithEnvelope` (explicit TRUTH, SPEC/12 §10). */
+export interface RenderableRateMark {
+  readonly id: string;
+  readonly cycle: CycleIndex;
+  readonly flank: RateMark["flank"];
+  readonly anchor: LatLon;
+  readonly bearingDeg: number;
+  readonly rateMetresPerMinute: number;
+  readonly provenance: Provenance;
+}
+
+/**
+ * CycleSpec pared down to what a map actually displays. Excludes
+ * `actualPerimeterAtEnd` (explicit TRUTH: "Resolves the judgement");
+ * `gaps` (each `RecordGap.whatWasHappening` is "truth-side only; NEVER
+ * rendered" — SPEC/04 §5 — and a gap's whole point is to render as
+ * nothing, so the render layer needs no gap data at all); `title`
+ * ("internal; not shown"); and the push-scheduling fields
+ * (`pushedAtomIds`, `deliveryOffsetsSeconds`, `probeIds`), which belong to
+ * the delivery/probe orchestration layer, not the render layer — a bubble
+ * reaches rendering through its own `bubble_available` event, not by the
+ * render layer reading the schedule ahead of time.
+ */
+export interface RenderableCycle {
+  readonly index: CycleIndex;
+  readonly phase: Phase;
+  readonly startsAtVirtual: VirtualTime;
+  readonly clockLabel: string;
+  readonly perimeter: Polygon;
+  readonly unitPositions: Readonly<Record<string, LatLon>>;
+  readonly rateMarks: readonly RenderableRateMark[];
+  readonly sensorFootprints: readonly SensorFootprint[];
+}
+
+/** BranchStatement minus `truth` (SPEC/04 revision 2026-09-17, "Stripped before render (I4)"). */
+export interface RenderableBranchStatement {
+  readonly branchId: string;
+  readonly cycle: CycleIndex | WarmupIndex;
+  readonly statementFi: string;
 }
 
 /** Compile-time guard: RenderableAtom must not structurally admit a `truth` key. Must not be `never`. */
@@ -75,24 +140,73 @@ export function assertNoTruthKeysPresent(value: unknown, path = ""): void {
   }
 }
 
+/** Runs the presence assertion, then deep-freezes. Shared tail for every `toRenderableX` function below, so each stays exhaustive (fields spelled out by name, nothing spread) while not repeating the guard/freeze pair. */
+function finalize<T extends object>(renderable: T): T {
+  assertNoTruthKeysPresent(renderable);
+  return deepFreeze(renderable);
+}
+
 /**
- * The only function permitted to cross the render boundary. Exhaustive
- * (every `RenderableAtom` field is populated from a named `InfoAtom`
- * field, nothing is spread), total (never throws on a well-typed
- * `InfoAtom`), and freezes its output deeply so a render-layer bug cannot
- * mutate the atom in place. Runs the presence assertion before returning,
- * so a structurally-impossible-but-runtime-real leak still fails loudly
- * rather than silently reaching a component.
+ * The primary function permitted to cross the render boundary for atoms.
+ * Exhaustive (every `RenderableAtom` field is populated from a named
+ * `InfoAtom` field, nothing is spread), total (never throws on a
+ * well-typed `InfoAtom`), and freezes its output deeply so a render-layer
+ * bug cannot mutate the atom in place. Runs the presence assertion before
+ * returning, so a structurally-impossible-but-runtime-real leak still
+ * fails loudly rather than silently reaching a component.
  */
 export function toRenderable(atom: InfoAtom): RenderableAtom {
-  const renderable: RenderableAtom = {
+  return finalize<RenderableAtom>({
     id: atom.id,
     record: atom.record,
     provenance: atom.provenance,
     degradationVisible: atom.degradation.map((d) => d.form),
-  };
-  assertNoTruthKeysPresent(renderable);
-  return deepFreeze(renderable);
+  });
+}
+
+export function toRenderableEnvelope(envelope: Envelope): RenderableEnvelope {
+  return finalize<RenderableEnvelope>({
+    cycle: envelope.cycle,
+    polygon: envelope.polygon,
+    certainty: envelope.certainty,
+    attribution: envelope.attribution,
+    horizonVirtual: envelope.horizonVirtual,
+    horizonLabel: envelope.horizonLabel,
+    containmentToleranceMetres: envelope.containmentToleranceMetres,
+  });
+}
+
+export function toRenderableRateMark(mark: RateMark): RenderableRateMark {
+  return finalize<RenderableRateMark>({
+    id: mark.id,
+    cycle: mark.cycle,
+    flank: mark.flank,
+    anchor: mark.anchor,
+    bearingDeg: mark.bearingDeg,
+    rateMetresPerMinute: mark.rateMetresPerMinute,
+    provenance: mark.provenance,
+  });
+}
+
+export function toRenderableCycle(cycle: CycleSpec): RenderableCycle {
+  return finalize<RenderableCycle>({
+    index: cycle.index,
+    phase: cycle.phase,
+    startsAtVirtual: cycle.startsAtVirtual,
+    clockLabel: cycle.clockLabel,
+    perimeter: cycle.perimeter,
+    unitPositions: cycle.unitPositions,
+    rateMarks: cycle.rateMarks.map(toRenderableRateMark),
+    sensorFootprints: cycle.sensorFootprints,
+  });
+}
+
+export function toRenderableBranchStatement(statement: BranchStatement): RenderableBranchStatement {
+  return finalize<RenderableBranchStatement>({
+    branchId: statement.branchId,
+    cycle: statement.cycle,
+    statementFi: statement.statementFi,
+  });
 }
 
 function deepFreeze<T>(value: T): T {

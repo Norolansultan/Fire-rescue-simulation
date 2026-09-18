@@ -438,6 +438,23 @@ export interface SensorFootprint {
   readonly geometry: Polygon | null;
 }
 
+/**
+ * SPEC/12 §6.2, §10: the participant's own allocation, echoed back on the
+ * map in the anticipated-status convention (solid symbol at the reported
+ * position, dashed symbol at the assigned sector). No truth field — but a
+ * real one must exist only for an asset the participant actually assigned
+ * (SPEC/12 §11 `test/render/no-recommendation.spec`); it is never authored
+ * scenario content, so it does not appear in `ScenarioContract` itself,
+ * unlike `AllocationRecommendation`.
+ */
+export interface AllocationMark {
+  readonly assetId: string;
+  readonly fromPosition: LatLon; // solid symbol, last reported
+  readonly toSectorId: string; // dashed symbol, assigned
+  readonly taskId: string;
+  readonly assignedAtCycle: CycleIndex;
+}
+
 export interface CycleSpec {
   readonly index: CycleIndex;
   readonly phase: Phase;
