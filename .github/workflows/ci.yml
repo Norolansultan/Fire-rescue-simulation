@@ -10,20 +10,26 @@ name: CI
 #
 # Steps wired so far, through M1 (engine and determinism), M2 (scenario
 # contract and validator), the logic-layer portion of M3 (render boundary
-# and render tree), and M4 (telemetry): type check, the determinism lint
-# (covering app/ and tools/), and the unit test suite (vitest runs
-# everything under test/, which includes the golden-run determinism test,
-# the render- and scenario-boundary truth-leak tests including
-# test/boundary/no-truth.spec, the scenario contract/validator tests, the
-# envelope-single / no-recommendation measure guards from SPEC/12 §11,
-# the telemetry record-kind coverage test, the derived-measures tests,
-# the IndexedDB-sink and resume tests, and the upload-queue test).
+# and render tree), M4 (telemetry), and the content-independent slice of
+# M5 (routing and retrieval): type check, the determinism lint (covering
+# app/ and tools/), and the unit test suite (vitest runs everything under
+# test/, which includes the golden-run determinism test, the render- and
+# scenario-boundary truth-leak tests including test/boundary/no-truth.spec,
+# the scenario contract/validator tests, the envelope-single /
+# no-recommendation measure guards from SPEC/12 §11, the telemetry
+# record-kind coverage test, the derived-measures tests, the
+# IndexedDB-sink and resume tests, the upload-queue test, the
+# capability-matrix and route-reachability tests, and the retrieval
+# closure test).
 #
 # M3's remaining pieces — an actual MapLibre/PMTiles map and the
 # CVD-simulation / pixel-accuracy tests — need real geographic tile data
 # through tools/bundle/ (not built) and a browser/WebGL test harness not
-# set up here; see the scope note in test/boundary/no-truth.spec.ts.
-# Licence scan and module-boundary lint are added when a milestone
+# set up here; see the scope note in test/boundary/no-truth.spec.ts. Most
+# of M5 beyond routing/retrieval closure — the radio panel's authored
+# responder, the real hybrid retrieval engine, drawers — needs authored
+# corpus content and an embedding-model choice that SPEC/11 lists as
+# open. Licence scan and module-boundary lint are added when a milestone
 # actually needs multiple licensed dependencies or cross-module import
 # rules to enforce — see SPEC/10 §3 for the dependency order.
 
