@@ -8,12 +8,14 @@ name: CI
 # fixture scenarios; the telemetry coverage and derived-measure tests. Any
 # failure blocks merge."
 #
-# Only the steps that exist as of M1 (engine and determinism) are wired
-# here: type check, the determinism lint, and the unit/golden-run test
-# suite (vitest runs everything under test/, which includes the golden
-# run). Licence scan, module-boundary lint, the truth-boundary test, the
-# scenario validator and the telemetry coverage tests are added as the
-# milestones that produce them (M2-M4) land — see SPEC/10 §3 for the
+# Steps wired so far, through M1 (engine and determinism) and M2
+# (scenario contract and validator): type check, the determinism lint
+# (now covering app/ and tools/), and the unit test suite (vitest runs
+# everything under test/, which includes the golden-run determinism test,
+# the render-boundary truth-leak tests, and the scenario contract/validator
+# tests against fixture scenarios). Licence scan, module-boundary lint,
+# and the telemetry coverage / derived-measure tests are added as the
+# milestones that produce them (M3-M4) land — see SPEC/10 §3 for the
 # dependency order.
 
 on:

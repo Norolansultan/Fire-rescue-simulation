@@ -30,6 +30,8 @@
  * than silently assumed.
  */
 
+import { compareStrings } from "./deterministic-object.js";
+
 export const STATES = [
   "BOOT",
   "PREFLIGHT",
@@ -129,11 +131,6 @@ export class InvalidTransitionError extends Error {
   }
 }
 
-/** Plain ordinal string comparator — not `localeCompare`, which is locale-sensitive and therefore a determinism risk (I1). */
-function compareTriggers(a: Trigger, b: Trigger): number {
-  return a < b ? -1 : a > b ? 1 : 0;
-}
-
 export class FreezeMachine {
   private state: EngineState;
   private readonly history: StateTransitionEvent[] = [];
@@ -162,11 +159,11 @@ export class FreezeMachine {
    */
   validTriggers(): Trigger[] {
     // determinism-lint-allow: result is sorted immediately below with an explicit comparator, so Object.keys' own iteration order never leaks out (I1).
-    const fromTable = (Object.keys(TRANSITIONS[this.state] ?? {}) as Trigger[]).sort(compareTriggers);
+    const fromTable = (Object.keys(TRANSITIONS[this.state] ?? {}) as Trigger[]).sort(compareStrings);
     if (this.isTerminal()) {
       return fromTable;
     }
-    return [...fromTable, "fault" as Trigger].sort(compareTriggers);
+    return [...fromTable, "fault" as Trigger].sort(compareStrings);
   }
 
   /**

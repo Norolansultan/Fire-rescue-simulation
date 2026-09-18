@@ -10,7 +10,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint:determinism": "tsx tools/validate/determinism-lint.ts app",
+    "lint:determinism": "tsx tools/validate/determinism-lint.ts app && tsx tools/validate/determinism-lint.ts tools",
+    "validate:scenario": "tsx tools/validate/scenario.ts",
     "ci": "npm run typecheck && npm run lint:determinism && npm test"
   },
   "devDependencies": {
