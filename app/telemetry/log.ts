@@ -6,16 +6,19 @@
  * that produced it. `seq` is gapless; a gap is a detected data-loss event
  * and is reported, never silently tolerated."
  *
- * Full `RecordKind` and per-kind `detail` shapes are enumerated in
- * SPEC/07_Telemetry_and_Logging.md §2 and belong to M4 (telemetry). This
- * module only builds the low-level append primitive M1 needs: assigning a
- * gapless `seq`, awaiting durable persistence before returning, and never
- * silently skipping a `seq` on a failed write. `kind` is typed as `string`
- * here and will be narrowed to the M4 `RecordKind` union without changing
- * this module's shape.
+ * `kind` stays typed as `string` at this layer rather than narrowed to
+ * the real `RecordKind` union (`record-kinds.ts`, M4). Two independent
+ * callers need this primitive: the real telemetry system (typed kinds,
+ * see `emit.ts`'s `appendTelemetryEvent`, which is the actual type-safe
+ * entry point production code should use) and `test/golden/`'s M1
+ * determinism harness, which deliberately logs synthetic engine-internal
+ * events (`rng_draw_u64`, `clock_advanced`) that are not, and were never
+ * meant to be, real telemetry — those golden fixtures predate this file
+ * and narrowing `kind` here would break them for no correctness gain.
  */
 
-import { asSeq, type ConditionId, type Seq, type VirtualTime } from "../engine/primitives.js";
+import { asSeq, type Seq, type VirtualTime } from "../engine/primitives.js";
+import type { Cell, ConditionId, Echelon } from "../scenario/types.js";
 
 export interface LogHeader {
   readonly formatVersion: string;
@@ -31,6 +34,16 @@ export interface LogHeader {
   readonly userAgent: string;
   readonly viewport: { readonly w: number; readonly h: number; readonly dpr: number };
   readonly counterbalance: { readonly expectationOrder: "A" | "B" };
+  /**
+   * SPEC/04 §11 amendment + revision (d): the amendment first added
+   * `guidanceMode` and `echelon`; revision (d) replaced `guidanceMode`
+   * with `cell` ("`SessionConfig.cell`; replaces `guidanceMode`"), and
+   * SPEC/07 §2 revision (d) says the log header follows suit ("Log header
+   * records `cell` instead of `guidanceMode`"). `guidanceMode` itself is
+   * therefore never recorded — only its final reconciled replacement.
+   */
+  readonly cell: Cell;
+  readonly echelon: Echelon;
 }
 
 export interface LogRecord {

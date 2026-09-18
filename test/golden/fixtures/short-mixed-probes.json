@@ -2,10 +2,12 @@
   "header": {
     "appVersion": "0.1.0",
     "bundleHash": "golden-fixture-bundle",
+    "cell": "radio",
     "condition": "directed",
     "counterbalance": {
       "expectationOrder": "A"
     },
+    "echelon": "command",
     "formatVersion": "0.1.0",
     "participantCode": "golden-participant",
     "scenarioId": "golden-scenario-mixed",

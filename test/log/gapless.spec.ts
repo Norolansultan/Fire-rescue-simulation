@@ -24,6 +24,8 @@ const HEADER: LogHeader = {
   userAgent: "vitest",
   viewport: { w: 1280, h: 800, dpr: 1 },
   counterbalance: { expectationOrder: "A" },
+  cell: "radio",
+  echelon: "command",
 };
 
 /** Wraps another sink and throws on chosen 1-indexed call numbers, to simulate a failing storage backend (e.g. IndexedDB quota / write failure). */

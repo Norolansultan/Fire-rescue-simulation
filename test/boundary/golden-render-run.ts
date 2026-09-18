@@ -40,6 +40,8 @@ function header(scenario: ScenarioContract): LogHeader {
     userAgent: "golden-render-harness",
     viewport: { w: 1280, h: 800, dpr: 1 },
     counterbalance: { expectationOrder: "A" },
+    cell: "radio",
+    echelon: "command",
   };
 }
 
