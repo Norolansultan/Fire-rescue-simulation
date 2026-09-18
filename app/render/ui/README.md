@@ -6,20 +6,28 @@ the workflow visible and clickable per an explicit request — it is a
 **preview build**, and differs from the real instrument in ways that
 matter before any real session runs:
 
-- **Basemap.** MapLibre needs vector or raster tiles. The real instrument
-  resolves these from an offline, content-hashed asset bundle
-  (`SPEC/05` §8, `tools/bundle/`), which is not built — it is the only
-  module permitted outbound network access, and building it means
-  fetching real, licensed MML data, a separate task. This preview points
-  MapLibre at a public demo style over the network instead, purely so the
-  map renders something. **This alone means invariant I3 ("no network
-  during a run") does not hold in this build.**
+- **Basemap.** MapLibre needs vector or raster tiles for a real
+  cartographic background. The real instrument resolves these from an
+  offline, content-hashed asset bundle (`SPEC/05` §8, `tools/bundle/`),
+  which is not built — it is the only module permitted outbound network
+  access, and building it means fetching real, licensed MML data, a
+  separate task. This preview uses a flat, tile-free background instead
+  (`OFFLINE_STYLE` in `components/MapView.tsx`) — no basemap imagery, but
+  also no network request of any kind, so I3 ("no network during a run")
+  holds for this build even without the real tile bundle. (An earlier
+  version of this preview pointed MapLibre at a public demo tile server
+  instead; that made the map silently fail closed — a blank canvas, no
+  error shown — in any offline or sandboxed environment, which is worse
+  than having no basemap at all.)
 - **Scenario content.** Drives off `app/scenario/demo-scenario.ts`,
   synthetic placeholder content — see `content/demo/README.md`.
-- **Retrieval / AI drawer.** The `Avaa tekoäly` drawer returns canned,
-  hand-written responses, not a real retrieval engine — the embedding
-  model choice is still open (`SPEC/11` §7.1) and wasn't asked to be
-  resolved here.
+- **Retrieval / AI drawer.** Haku, `Avaa tekoäly`, and Radio all resolve
+  to `app/retrieval/closure.ts`'s closed, deterministic token-overlap
+  baseline (via `SessionOrchestrator.searchAtoms`/`askUnit`) — never
+  hand-written canned text, never generated prose. The hybrid sparse+dense
+  engine `SPEC/14` §5 specifies needs an embedding-model choice `SPEC/11`
+  §7.1 still leaves open; this baseline satisfies I6 regardless of
+  ranking quality and stands in until that choice is made.
 - **Scope.** Covers the primary loop end to end (bubbles arrive, envelope
   reveal, three-way judgement, confidence, follow-up, verification,
   allocation, cycle advance) for one condition at a time. Preflight,

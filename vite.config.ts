@@ -18,4 +18,14 @@ export default defineConfig({
     outDir: "../../../dist/ui",
     emptyOutDir: true,
   },
+  // maplibre-gl spawns its GeoJSON-tiling work in a Web Worker via a
+  // `new URL(...)`-relative import; Vite's dependency pre-bundling
+  // (esbuild) breaks that URL, so the worker script 404s silently and
+  // every geometry layer (fire perimeter, envelope, units, ...) stores
+  // its data but never renders a single pixel of it. Excluding the
+  // package from pre-bundling keeps it in its own natural ESM form, where
+  // the worker URL resolves correctly.
+  optimizeDeps: {
+    exclude: ["maplibre-gl"],
+  },
 });

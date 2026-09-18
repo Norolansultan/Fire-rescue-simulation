@@ -29,6 +29,22 @@ function toGeoJSONPoint(p: LatLon) {
 
 const EMPTY_FC = { type: "FeatureCollection" as const, features: [] as ReturnType<typeof toGeoJSONPolygon>[] };
 
+/**
+ * A self-contained style — no external tile server, no network request at
+ * all. Earlier this pointed at a public demo style (demotiles.maplibre.org)
+ * for a more map-like background; that made the whole preview silently
+ * dependent on outbound network access, which fails closed (a blank grey
+ * canvas, no error surfaced to the user) in any sandboxed or offline
+ * environment, this one included. A flat background is also a closer match
+ * to what I3 ("no network during a run") actually wants from the real
+ * instrument's offline tile bundle than a network fetch ever was.
+ */
+const OFFLINE_STYLE: maplibregl.StyleSpecification = {
+  version: 8,
+  sources: {},
+  layers: [{ id: "background", type: "background", paint: { "background-color": "#12151a" } }],
+};
+
 export interface MapViewProps {
   readonly snapshot: SessionSnapshot;
   readonly extent: { readonly south: number; readonly north: number; readonly west: number; readonly east: number };
@@ -43,13 +59,13 @@ export function MapView({ snapshot, extent, pickingBreachPoint, onMapClick }: Ma
   onMapClickRef.current = onMapClick;
   const pickingRef = useRef(pickingBreachPoint);
   pickingRef.current = pickingBreachPoint;
+  const loadedRef = useRef(false);
 
   useEffect(() => {
     if (!containerRef.current) return;
     const map = new maplibregl.Map({
       container: containerRef.current,
-      // Public demo style — visual preview only, see app/render/ui/README.md.
-      style: "https://demotiles.maplibre.org/style.json",
+      style: OFFLINE_STYLE,
       bounds: [
         [extent.west, extent.south],
         [extent.east, extent.north],
@@ -81,10 +97,12 @@ export function MapView({ snapshot, extent, pickingBreachPoint, onMapClick }: Ma
       map.addLayer({ id: "units-circle", type: "circle", source: "units", paint: { "circle-color": HUE.own_formation, "circle-radius": 6, "circle-stroke-color": "#fff", "circle-stroke-width": 1 } });
       map.addLayer({ id: "breach-point-circle", type: "circle", source: "breach-point", paint: { "circle-color": "#ffcc00", "circle-radius": 7, "circle-stroke-color": "#000", "circle-stroke-width": 1 } });
 
+      loadedRef.current = true;
       updateLayers(map, snapshotRef.current);
     });
 
     return () => {
+      loadedRef.current = false;
       map.remove();
       mapRef.current = null;
     };
@@ -95,7 +113,10 @@ export function MapView({ snapshot, extent, pickingBreachPoint, onMapClick }: Ma
   snapshotRef.current = snapshot;
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded() || !map.getSource("perimeter")) return;
+    // `map.isStyleLoaded()` never returns true for a style with no tile
+    // sources to wait on (only ever the "load" event fires) — tracked with
+    // our own flag instead of relying on that API.
+    if (!map || !loadedRef.current) return;
     updateLayers(map, snapshot);
   }, [snapshot]);
 
